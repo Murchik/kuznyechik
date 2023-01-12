@@ -3,22 +3,35 @@ package main
 import (
 	"fmt"
 
-	"github.com/Murchik/kuznyechik/crypt"
+	kuznec "github.com/Murchik/kuznyechik/crypt"
 )
 
 func main() {
-	key1 := []byte("someFancyKey1")
-	key2 := []byte("someFancyKey2")
+	var test_K = [32]uint8{0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
+		0xfe, 0xdc, 0xba, 0x98, 0x76, 0x54, 0x32, 0x10, 0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef}
 
-	crypt.ExpandKey(key1, key2)
-	fmt.Printf("key 1: '%s'\nkey 2: '%s'\n\n", key1, key2)
+	var test_PT = [16]uint8{0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x00, 0xff, 0xee, 0xdd, 0xcc, 0xbb, 0xaa, 0x99, 0x88}
+	var reference_CT = [16]uint8{0x7F, 0x67, 0x9D, 0x90, 0xBE, 0xBC, 0x24, 0x30, 0x5A, 0x46, 0x8D, 0x42, 0xB9, 0xD4, 0xED, 0xCD}
 
-	message := []byte("Hello world! ")
-	fmt.Printf("Before encryption:\nlen = %v\n'%s'\n\n", len(message), message)
+	kuznec.InitCipher()
 
-	encryptMsg := crypt.Encrypt(message)
-	fmt.Printf("After encryption:\nlen = %v\ndata = %v\n\n", len(encryptMsg), encryptMsg)
+	fmt.Printf("Message: %X\n", test_PT)
 
-	decryptMsg := crypt.Decrypt(encryptMsg)
-	fmt.Printf("After decryption:\nlen = %v\n'%s'\n", len(decryptMsg), decryptMsg)
+	test_CT := kuznec.Encrypt(test_K, test_PT)
+
+	fmt.Printf("Cipher text: %X - ", test_CT)
+	if test_CT != reference_CT {
+		fmt.Printf("FAILED! [Not equal to reference cipher text!]\n")
+	} else {
+		fmt.Printf("OK\n")
+	}
+
+	test_2PT := kuznec.Decrypt(test_K, test_CT)
+
+	fmt.Printf("Message decrypted: %X - ", test_2PT)
+	if test_2PT != test_PT {
+		fmt.Printf("FAILED! [PT != D(E(PT,K),K)]\n")
+	} else {
+		fmt.Printf("OK\n")
+	}
 }
